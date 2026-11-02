@@ -1,0 +1,6 @@
+{
+  "name": "ConviteQR — Gestão de RSVP & Portaria",
+  "description": "Plataforma completa de confirmação de presença (RSVP), geração de convites personalizados com QR Code dinâmico e controle de portaria em tempo real.",
+  "requestFramePermissions": ["camera"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ConviteQR — Confirmação de Presença & Convite Digital</title>
+  <meta name="description" content="Confirme sua presença e baixe seu convite nominal com QR Code exclusivo para acesso ao evento." />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=JetBrains+Mono:wght@400;600&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            display: ['Fraunces', 'Georgia', 'serif'],
+            sans: ['Plus Jakarta Sans', 'system-ui', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace']
+          }
+        }
+      }
+    };
+  </script>
+  <style>
+    body {
+      font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+      background-color: #f8fafc;
+      color: #0f172a;
+    }
+    .tabular-nums {
+      font-variant-numeric: tabular-nums;
+    }
+    .headline-balance {
+      text-wrap: balance;
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col bg-slate-50 text-slate-900 antialiased selection:bg-amber-500 selection:text-white">
+
+  <!-- Top Bar Contract: 3 Zones -->
+  <header class="w-full bg-white border-b border-slate-200">
+    <div class="max-w-7xl mx-auto flex items-center justify-between gap-8 px-6 py-4">
+      <!-- Zone 1: Brand Wordmark -->
+      <a href="/" class="text-lg font-bold tracking-tight text-slate-900 whitespace-nowrap shrink-0">
+        ConviteQR
+      </a>
+
+      <!-- Zone 2: Navigation Links -->
+      <nav aria-label="Navegação Principal" class="hidden md:flex items-center gap-6 text-sm font-medium text-slate-600">
+        <span class="text-slate-900 font-semibold whitespace-nowrap shrink-0">Confirmação de Presença</span>
+        <a href="#instrucoes" class="hover:text-slate-900 transition-colors whitespace-nowrap shrink-0">Como Funciona</a>
+      </nav>
+
+      <!-- Zone 3: Primary Action / Status -->
+      <div class="flex items-center gap-3 shrink-0">
+        <span class="text-xs font-medium text-slate-500 whitespace-nowrap shrink-0">
+          Acesso Exclusivo por Celular
+        </span>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="flex-1 max-w-7xl w-full mx-auto px-6 py-10 lg:py-14">
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-10 items-start">
+
+      <!-- Left Column: Event Context + Phone Lookup + RSVP Actions (7 cols) -->
+      <section class="lg:col-span-7 space-y-8">
+        <!-- Event Editorial Header -->
+        <div class="space-y-3 border-b border-slate-200 pb-7">
+          <div class="flex flex-wrap items-center gap-2 text-xs font-medium text-slate-500">
+            <span>28 de Novembro de 2026</span>
+            <span aria-hidden="true">·</span>
+            <span>Recepção às 20h00</span>
+            <span aria-hidden="true">·</span>
+            <span>Espaço Villa Lobos, São Paulo</span>
+          </div>
+          <h1 class="font-display text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight text-slate-900 headline-balance">
+            Noite de Gala &amp; Summit 2026
+          </h1>
+          <p class="text-base text-slate-600 max-w-2xl leading-relaxed">
+            Consulte seu convite utilizando o número de telefone cadastrado pela organização. Ao confirmar presença, sua credencial nominal com QR Code exclusivo será gerada instantaneamente.
+          </p>
+        </div>
+
+        <!-- Step 1: Phone Search Box -->
+        <div class="bg-white border border-slate-200 rounded-xl p-6 sm:p-8 space-y-6">
+          <div class="space-y-1">
+            <h2 class="text-lg font-semibold text-slate-900">1. Localizar meu convite</h2>
+            <p class="text-sm text-slate-500">Digite seu celular com DDD (somente números, a máscara é aplicada automaticamente).</p>
+          </div>
+
+          <form id="search-form" class="flex flex-col sm:flex-row gap-3" novalidate>
+            <div class="flex-1">
+              <label for="phone-input" class="sr-only">Número de telefone com DDD</label>
+              <input
+                id="phone-input"
+                name="phone"
+                type="tel"
+                inputmode="numeric"
+                autocomplete="tel"
+                placeholder="(11) 99876-5432"
+                maxlength="15"
+                required
+                class="w-full px-4 py-3 text-base font-mono tabular-nums bg-slate-50 border border-slate-300 rounded-lg text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-600 focus:border-amber-600 focus:bg-white transition-colors"
+              />
+            </div>
+            <button
+              id="search-btn"
+              type="submit"
+              class="px-6 py-3 text-sm font-semibold text-white bg-slate-900 rounded-lg hover:bg-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-slate-900 transition-colors whitespace-nowrap shrink-0 cursor-pointer"
+            >
+              Buscar Convite
+            </button>
+          </form>
+
+          <!-- Error / Friendly Feedback Message -->
+          <div id="search-error" role="alert" class="hidden rounded-lg border border-red-200 bg-red-50 px-4 py-3.5 text-sm text-red-800">
+            <div class="font-semibold" id="search-error-title">Convite não localizado</div>
+            <p id="search-error-text" class="mt-0.5 text-red-700"></p>
+          </div>
+
+          <!-- Production Info Note -->
+          <div id="instrucoes" class="pt-4 border-t border-slate-100 flex items-start gap-2.5 text-xs text-slate-500">
+            <svg class="w-4 h-4 text-amber-600 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <p>
+              Convite nominal e individual. Caso seu telefone tenha sido alterado recentemente ou você precise de auxílio, contate diretamente os organizadores do evento.
+            </p>
+          </div>
+        </div>
+
+        <!-- Step 2: Guest Found & RSVP Decision Panel -->
+        <div id="guest-panel" class="hidden bg-white border border-slate-200 rounded-xl p-6 sm:p-8 space-y-6">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-5 border-b border-slate-200">
+            <div>
+              <p class="text-xs font-medium text-slate-500">Convidado(a) identificado(a)</p>
+              <h2 id="guest-greeting" class="text-2xl sm:text-3xl font-bold text-slate-900 mt-0.5">
+                Olá!
+              </h2>
+            </div>
+            <div class="text-xs font-medium text-slate-600 tabular-nums" id="guest-meta-line">
+              <!-- e.g. (11) 99876-5432 · Status: Pendente -->
+            </div>
+          </div>
+
+          <div class="space-y-3">
+            <p class="text-sm text-slate-600">
+              Selecione uma das opções abaixo para confirmar sua presença e emitir seu convite com QR Code personalizado:
+            </p>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+              <button
+                id="btn-confirm-rsvp"
+                type="button"
+                class="w-full px-5 py-3.5 text-sm font-semibold text-white bg-emerald-700 hover:bg-emerald-800 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-emerald-700 transition-colors whitespace-nowrap shrink-0 cursor-pointer"
+              >
+                Confirmar Presença
+              </button>
+
+              <button
+                id="btn-decline-rsvp"
+                type="button"
+                class="w-full px-5 py-3.5 text-sm font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 border border-slate-300 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-slate-500 transition-colors whitespace-nowrap shrink-0 cursor-pointer"
+              >
+                Não Poderei Ir
+              </button>
+            </div>
+          </div>
+
+          <!-- Status Banner inside Guest Panel -->
+          <div id="rsvp-feedback-banner" class="hidden rounded-lg border px-4 py-3.5 text-sm"></div>
+        </div>
+      </section>
+
+      <!-- Right Column: Generated Invitation Preview & Download (5 cols) -->
+      <aside class="lg:col-span-5">
+        <div class="bg-white border border-slate-200 rounded-xl p-6 sm:p-7 space-y-5">
+          <div class="flex items-center justify-between border-b border-slate-200 pb-4">
+            <div>
+              <h2 class="text-base font-semibold text-slate-900">Credencial &amp; Convite Oficial</h2>
+              <p id="preview-subtitle" class="text-xs text-slate-500 mt-0.5">
+                Aguardando confirmação de presença para estampar o QR Code
+              </p>
+            </div>
+            <span id="preview-state-label" class="text-xs font-medium text-slate-500 tabular-nums">
+              Sem emissão
+            </span>
+          </div>
+
+          <!-- Empty / Pending Preview Placeholder -->
+          <div id="invite-empty-state" class="py-12 px-6 text-center bg-slate-50 border border-dashed border-slate-300 rounded-lg space-y-3">
+            <div class="w-12 h-12 mx-auto rounded-lg bg-slate-200/70 flex items-center justify-center text-slate-600">
+              <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 4.875c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5A1.125 1.125 0 013.75 9.375v-4.5zM3.75 14.625c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5a1.125 1.125 0 01-1.125-1.125v-4.5zM13.5 4.875c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5A1.125 1.125 0 0113.5 9.375v-4.5z" />
+                <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 6.75h.75v.75h-.75v-.75zM6.75 16.5h.75v.75h-.75v-.75zM16.5 6.75h.75v.75h-.75v-.75zM13.5 13.5h.75v.75h-.75v-.75zM13.5 19.5h.75v.75h-.75v-.75zM19.5 13.5h.75v.75h-.75v-.75zM19.5 19.5h.75v.75h-.75v-.75zM16.5 16.5h.75v.75h-.75v-.75z" />
+              </svg>
+            </div>
+            <div class="space-y-1">
+              <p class="text-sm font-semibold text-slate-800">Seu convite personalizado aparecerá aqui</p>
+              <p class="text-xs text-slate-500 max-w-xs mx-auto leading-relaxed">
+                Busque seu telefone ao lado e clique em "Confirmar Presença" para gerar a imagem final com seu QR Code único.
+              </p>
+            </div>
+          </div>
+
+          <!-- Active Invite Result Container -->
+          <div id="invite-result-container" class="hidden space-y-4">
+            <div class="relative rounded-lg overflow-hidden border border-slate-200 bg-slate-900">
+              <img
+                id="invite-image"
+                src=""
+                alt="Convite oficial personalizado com QR Code do convidado"
+                referrerPolicy="no-referrer"
+                class="w-full h-auto block object-contain max-h-[540px] mx-auto"
+              />
+            </div>
+
+            <!-- Token Credential Row -->
+            <div class="bg-slate-50 border border-slate-200 rounded-lg p-3.5 flex items-center justify-between gap-3">
+              <div class="min-w-0">
+                <span class="block text-[11px] font-medium text-slate-500">Token único de validação (Portaria)</span>
+                <code id="invite-token-code" class="block text-xs font-mono font-semibold text-slate-900 truncate tabular-nums mt-0.5"></code>
+              </div>
+              <button
+                id="btn-copy-token"
+                type="button"
+                class="px-3 py-1.5 text-xs font-semibold text-slate-700 bg-white border border-slate-300 rounded-md hover:bg-slate-100 transition-colors whitespace-nowrap shrink-0 cursor-pointer"
+              >
+                Copiar Token
+              </button>
+            </div>
+
+            <!-- Primary Download CTA -->
+            <div class="flex flex-col gap-2.5">
+              <a
+                id="btn-download-invite"
+                href="#"
+                download
+                class="w-full inline-flex items-center justify-center gap-2 px-5 py-3.5 text-sm font-semibold text-white bg-amber-600 hover:bg-amber-700 rounded-lg shadow-sm transition-colors whitespace-nowrap text-center cursor-pointer"
+              >
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M7.5 12L12 16.5m0 0L16.5 12M12 16.5V3" />
+                </svg>
+                Baixar Convite para Apresentação
+              </a>
+              <p class="text-[11px] text-center text-slate-500">
+                Apresente o QR Code na tela do celular ou impresso na entrada do evento.
+              </p>
+            </div>
+          </div>
+        </div>
+      </aside>
+
+    </div>
+  </main>
+
+  <!-- Quiet Footer -->
+  <footer class="w-full border-t border-slate-200 bg-white mt-auto">
+    <div class="max-w-7xl mx-auto px-6 py-4 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-500">
+      <span>ConviteQR · Sistema oficial de RSVP e emissão de credenciais</span>
+      <span>Acesso pessoal e intransferível</span>
+    </div>
+  </footer>
+
+  <script>
+    const phoneInput = document.getElementById('phone-input');
+    const searchForm = document.getElementById('search-form');
+    const searchBtn = document.getElementById('search-btn');
+    const searchError = document.getElementById('search-error');
+    const searchErrorText = document.getElementById('search-error-text');
+
+    const guestPanel = document.getElementById('guest-panel');
+    const guestGreeting = document.getElementById('guest-greeting');
+    const guestMetaLine = document.getElementById('guest-meta-line');
+    const btnConfirmRsvp = document.getElementById('btn-confirm-rsvp');
+    const btnDeclineRsvp = document.getElementById('btn-decline-rsvp');
+    const rsvpFeedbackBanner = document.getElementById('rsvp-feedback-banner');
+
+    const previewSubtitle = document.getElementById('preview-subtitle');
+    const previewStateLabel = document.getElementById('preview-state-label');
+    const inviteEmptyState = document.getElementById('invite-empty-state');
+    const inviteResultContainer = document.getElementById('invite-result-container');
+    const inviteImage = document.getElementById('invite-image');
+    const inviteTokenCode = document.getElementById('invite-token-code');
+    const btnCopyToken = document.getElementById('btn-copy-token');
+    const btnDownloadInvite = document.getElementById('btn-download-invite');
+
+    let currentGuest = null;
+
+    // Automatic Phone Mask: (DD) 9XXXX-XXXX or (DD) XXXX-XXXX
+    function applyPhoneMask(raw) {
+      let digits = String(raw || '').replace(/\D/g, '');
+      if ((digits.length === 12 || digits.length === 13) && digits.startsWith('55')) {
+        digits = digits.slice(2);
+      }
+      digits = digits.slice(0, 11);
+
+      if (digits.length === 0) return '';
+      if (digits.length <= 2) return `(${digits}`;
+      if (digits.length <= 6) return `(${digits.slice(0, 2)}) ${digits.slice(2)}`;
+      if (digits.length <= 10) {
+        return `(${digits.slice(0, 2)}) ${digits.slice(2, 6)}-${digits.slice(6)}`;
+      }
+      return `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7, 11)}`;
+    }
+
+    function statusLabelPt(status) {
+      if (status === 'confirmed') return 'Confirmado';
+      if (status === 'declined') return 'Não poderá comparecer';
+      return 'Aguardando confirmação';
+    }
+
+    phoneInput.addEventListener('input', (e) => {
+      const masked = applyPhoneMask(e.target.value);
+      e.target.value = masked;
+    });
+
+    function showError(message) {
+      searchErrorText.textContent = message;
+      searchError.classList.remove('hidden');
+      guestPanel.classList.add('hidden');
+      renderInvitePreview(null);
+    }
+
+    function hideError() {
+      searchError.classList.add('hidden');
+      searchErrorText.textContent = '';
+    }
+
+    function renderInvitePreview(guest) {
+      if (!guest || guest.status !== 'confirmed' || !guest.inviteUrl) {
+        inviteEmptyState.classList.remove('hidden');
+        inviteResultContainer.classList.add('hidden');
+        previewSubtitle.textContent = guest && guest.status === 'declined'
+          ? 'Ausência registrada — confirme presença caso mude de ideia'
+          : 'Aguardando confirmação de presença para estampar o QR Code';
+        previewStateLabel.textContent = guest ? statusLabelPt(guest.status) : 'Sem emissão';
+        return;
+      }
+
+      inviteEmptyState.classList.add('hidden');
+      inviteResultContainer.classList.remove('hidden');
+      inviteImage.src = guest.inviteUrl;
+      inviteTokenCode.textContent = guest.token;
+      btnDownloadInvite.href = guest.downloadUrl || guest.inviteUrl;
+      previewSubtitle.textContent = `Emitido para ${guest.name}`;
+      previewStateLabel.textContent = 'QR Code Ativo';
+    }
+
+    function renderGuestPanel(guest) {
+      currentGuest = guest;
+      guestGreeting.textContent = `Olá, ${guest.name}!`;
+      guestMetaLine.textContent = `${guest.formattedPhone || applyPhoneMask(guest.phone)} · ${statusLabelPt(guest.status)}`;
+      guestPanel.classList.remove('hidden');
+
+      if (guest.status === 'confirmed') {
+        rsvpFeedbackBanner.className = 'rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900';
+        rsvpFeedbackBanner.textContent = 'Sua presença está confirmada! Confira seu convite nominal com QR Code ao lado e clique em "Baixar Convite".';
+        rsvpFeedbackBanner.classList.remove('hidden');
+      } else if (guest.status === 'declined') {
+        rsvpFeedbackBanner.className = 'rounded-lg border border-slate-300 bg-slate-100 px-4 py-3 text-sm text-slate-700';
+        rsvpFeedbackBanner.textContent = 'Você informou que não poderá comparecer. Caso seus planos mudem, basta clicar em "Confirmar Presença".';
+        rsvpFeedbackBanner.classList.remove('hidden');
+      } else {
+        rsvpFeedbackBanner.classList.add('hidden');
+      }
+
+      renderInvitePreview(guest);
+    }
+
+    async function searchByPhone(rawPhone) {
+      hideError();
+      const cleanDigits = String(rawPhone || '').replace(/\D/g, '');
+      if (cleanDigits.length < 10) {
+        showError('Por favor, informe o DDD + número de telefone completo (10 ou 11 dígitos).');
+        return;
+      }
+
+      searchBtn.disabled = true;
+      searchBtn.textContent = 'Buscando...';
+
+      try {
+        const res = await fetch(`/api/guest/search?phone=${encodeURIComponent(cleanDigits)}`);
+        const data = await res.json();
+
+        if (!res.ok) {
+          showError(data.error || 'Convidado não encontrado para este número.');
+          return;
+        }
+
+        renderGuestPanel(data.guest);
+      } catch (err) {
+        showError('Não foi possível consultar o servidor no momento. Tente novamente.');
+      } finally {
+        searchBtn.disabled = false;
+        searchBtn.textContent = 'Buscar Convite';
+      }
+    }
+
+    async function submitRsvp(status) {
+      if (!currentGuest) return;
+      btnConfirmRsvp.disabled = true;
+      btnDeclineRsvp.disabled = true;
+
+      const originalConfirmText = btnConfirmRsvp.textContent;
+      if (status === 'confirmed') {
+        btnConfirmRsvp.textContent = 'Gerando Convite QR...';
+      }
+
+      try {
+        const res = await fetch('/api/guest/rsvp', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            phone: currentGuest.phone,
+            status
+          })
+        });
+        const data = await res.json();
+
+        if (!res.ok) {
+          showError(data.error || 'Erro ao atualizar confirmação de presença.');
+          return;
+        }
+
+        renderGuestPanel(data.guest);
+      } catch (err) {
+        showError('Falha de comunicação ao salvar sua confirmação.');
+      } finally {
+        btnConfirmRsvp.disabled = false;
+        btnDeclineRsvp.disabled = false;
+        btnConfirmRsvp.textContent = originalConfirmText;
+      }
+    }
+
+    searchForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      searchByPhone(phoneInput.value);
+    });
+
+    btnConfirmRsvp.addEventListener('click', () => submitRsvp('confirmed'));
+    btnDeclineRsvp.addEventListener('click', () => submitRsvp('declined'));
+
+    btnCopyToken.addEventListener('click', async () => {
+      if (!currentGuest?.token) return;
+      try {
+        await navigator.clipboard.writeText(currentGuest.token);
+        btnCopyToken.textContent = 'Copiado!';
+        setTimeout(() => {
+          btnCopyToken.textContent = 'Copiar Token';
+        }, 1800);
+      } catch {
+        // Fallback selection
+      }
+    });
+  </script>
+</body>
+</html>

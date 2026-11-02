@@ -1,0 +1,1061 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ConviteQR — Painel do Organizador (Admin)</title>
+  <meta name="description" content="Painel administrativo para upload do modelo de convite, posicionamento visual do QR Code, controle de permissões e importação de convidados." />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=JetBrains+Mono:wght@400;600&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            display: ['Fraunces', 'Georgia', 'serif'],
+            sans: ['Plus Jakarta Sans', 'system-ui', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace']
+          }
+        }
+      }
+    };
+  </script>
+  <style>
+    body {
+      font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+      background-color: #f8fafc;
+      color: #0f172a;
+    }
+    .tabular-nums {
+      font-variant-numeric: tabular-nums;
+    }
+    #template-stage {
+      user-select: none;
+      touch-action: none;
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col bg-slate-50 text-slate-900 antialiased">
+
+  <!-- Top Bar Contract: 3 Zones -->
+  <header class="w-full bg-white border-b border-slate-200">
+    <div class="max-w-7xl mx-auto flex items-center justify-between gap-8 px-6 py-4">
+      <!-- Zone 1: Brand Wordmark -->
+      <a href="/" class="text-lg font-bold tracking-tight text-slate-900 whitespace-nowrap shrink-0">
+        ConviteQR
+      </a>
+
+      <!-- Zone 2: Navigation Links -->
+      <nav aria-label="Navegação Principal" class="hidden md:flex items-center gap-6 text-sm font-medium text-slate-600">
+        <span class="text-slate-900 font-semibold whitespace-nowrap shrink-0">Painel do Organizador</span>
+        <a href="/portaria.html" class="hover:text-slate-900 transition-colors whitespace-nowrap shrink-0">Acesso Portaria</a>
+        <a href="/index.html" class="hover:text-slate-900 transition-colors whitespace-nowrap shrink-0">Área do Convidado</a>
+      </nav>
+
+      <!-- Zone 3: Primary Action / Admin Status -->
+      <div class="flex items-center gap-3 shrink-0">
+        <div id="admin-auth-badge" class="hidden flex items-center gap-2 text-xs">
+          <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+          <span class="font-medium text-slate-700">Administrador Conectado</span>
+          <button
+            id="btn-logout-admin"
+            type="button"
+            class="ml-2 px-2.5 py-1 text-[11px] font-semibold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded border border-slate-300 cursor-pointer"
+          >
+            Sair
+          </button>
+        </div>
+        <a href="/index.html" class="px-3.5 py-1.5 text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors whitespace-nowrap shrink-0">
+          Visualizar Página Pública
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <!-- Login Modal / Gatekeeper when Admin not authenticated -->
+  <div id="admin-login-screen" class="flex-1 flex items-center justify-center px-6 py-12">
+    <div class="w-full max-w-md bg-white border border-slate-200 rounded-xl p-8 space-y-6 shadow-sm">
+      <div class="space-y-2 text-center">
+        <div class="w-12 h-12 mx-auto rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-800">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z" />
+          </svg>
+        </div>
+        <h1 class="text-xl font-bold text-slate-900">Autenticação do Organizador</h1>
+        <p class="text-xs text-slate-500 leading-relaxed">
+          Digite a chave de acesso mestre do evento para gerenciar templates, listas de convidados e permissões da equipe.
+        </p>
+      </div>
+
+      <form id="admin-auth-form" class="space-y-4">
+        <div>
+          <label for="admin-passkey-input" class="block text-xs font-semibold text-slate-700 mb-1">
+            Chave Mestra de Administrador
+          </label>
+          <input
+            id="admin-passkey-input"
+            type="password"
+            placeholder="Digite a chave de administrador"
+            required
+            autocomplete="current-password"
+            class="w-full px-4 py-2.5 text-sm font-mono bg-slate-50 border border-slate-300 rounded-lg text-slate-900 focus:outline-none focus:ring-2 focus:ring-amber-600 focus:bg-white"
+          />
+        </div>
+
+        <button
+          type="submit"
+          id="btn-login-admin"
+          class="w-full px-5 py-3 text-sm font-semibold text-white bg-slate-900 hover:bg-slate-800 rounded-lg transition-colors cursor-pointer"
+        >
+          Acessar Painel
+        </button>
+
+        <div id="admin-login-error" class="hidden rounded-lg border border-red-200 bg-red-50 p-3 text-xs text-red-700"></div>
+      </form>
+
+      <div class="pt-4 border-t border-slate-100 text-center">
+        <p class="text-[11px] text-slate-400">
+          Chave padrão inicial do sistema: <code class="font-mono text-slate-600">admin2026</code> (ou variável <code class="font-mono text-slate-600">ADMIN_PASSWORD</code> do ambiente).
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Management Workspace (Visible only when authenticated) -->
+  <main id="admin-main-content" class="hidden flex-1 max-w-7xl w-full mx-auto px-6 py-8 space-y-8">
+
+    <!-- Page Title & Header Actions -->
+    <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-6 border-b border-slate-200">
+      <div>
+        <h1 class="font-display text-2xl sm:text-3xl font-bold text-slate-900">
+          Painel do Organizador
+        </h1>
+        <p class="text-sm text-slate-600 mt-1">
+          Configure a arte do convite, posicione a área de estampa do QR Code, gerencie as chaves da portaria e importe sua lista de convidados.
+        </p>
+      </div>
+
+      <div class="flex items-center gap-3">
+        <a
+          href="/portaria.html"
+          target="_blank"
+          class="px-4 py-2 text-xs font-semibold text-slate-700 bg-white border border-slate-300 hover:bg-slate-50 rounded-lg transition-colors whitespace-nowrap shrink-0"
+        >
+          Abrir Tela de Portaria (Nova Guia)
+        </a>
+      </div>
+    </div>
+
+    <!-- Global Alert Banner -->
+    <div id="admin-alert" role="status" class="hidden rounded-lg border px-4 py-3 text-sm"></div>
+
+    <!-- Section 1: Access Control & Reception Passkey Management -->
+    <section aria-label="Permissões e Chaves de Acesso" class="bg-white border border-slate-200 rounded-xl p-6 space-y-4">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200 pb-3">
+        <div>
+          <h2 class="text-base font-semibold text-slate-900">Divisão de Permissões &amp; Chaves de Acesso</h2>
+          <p class="text-xs text-slate-500 mt-0.5">
+            A equipe de recepção utiliza a chave da portaria (acesso restrito a check-in e estatísticas, sem acesso a dados confidenciais ou configurações).
+          </p>
+        </div>
+        <span class="text-xs font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 rounded px-2.5 py-1 whitespace-nowrap shrink-0">
+          Permissões Ativas
+        </span>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <!-- Portaria Passkey Box -->
+        <div class="bg-slate-50 border border-slate-200 rounded-lg p-4 space-y-3">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-bold uppercase tracking-wider text-slate-700">Chave da Portaria (Recepção)</span>
+            <span class="text-[11px] text-slate-500">Acesso: Apenas Check-in</span>
+          </div>
+          <div class="flex items-center gap-2">
+            <input
+              id="input-portaria-key"
+              type="text"
+              class="flex-1 px-3 py-2 text-xs font-mono font-semibold bg-white border border-slate-300 rounded text-slate-900"
+              placeholder="Chave da Portaria"
+            />
+            <button
+              id="btn-copy-portaria-key"
+              type="button"
+              class="px-3 py-2 text-xs font-semibold text-slate-700 bg-white border border-slate-300 hover:bg-slate-100 rounded transition-colors whitespace-nowrap shrink-0 cursor-pointer"
+            >
+              Copiar Chave
+            </button>
+          </div>
+          <p class="text-[11px] text-slate-500">
+            Envie esta chave aos operadores da portaria. Eles não poderão ver nem editar as listas ou templates.
+          </p>
+        </div>
+
+        <!-- Master Admin Passkey Box -->
+        <div class="bg-slate-50 border border-slate-200 rounded-lg p-4 space-y-3">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-bold uppercase tracking-wider text-slate-700">Chave Mestra de Administrador</span>
+            <span class="text-[11px] text-slate-500">Acesso: Total</span>
+          </div>
+          <div class="flex items-center gap-2">
+            <input
+              id="input-admin-key"
+              type="text"
+              class="flex-1 px-3 py-2 text-xs font-mono font-semibold bg-white border border-slate-300 rounded text-slate-900"
+              placeholder="Chave de Administrador"
+            />
+            <button
+              id="btn-save-keys"
+              type="button"
+              class="px-4 py-2 text-xs font-semibold text-white bg-slate-900 hover:bg-slate-800 rounded transition-colors whitespace-nowrap shrink-0 cursor-pointer"
+            >
+              Salvar Novas Chaves
+            </button>
+          </div>
+          <p class="text-[11px] text-slate-500">
+            A chave mestra concede acesso irrestrito para carregar templates e gerenciar o evento.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- KPI Summary Strip (5 columns, single-elevation, tabular-nums) -->
+    <section aria-label="Resumo de Convidados" class="grid grid-cols-2 lg:grid-cols-5 gap-4">
+      <div class="bg-white border border-slate-200 rounded-xl p-4">
+        <span class="text-xs font-medium text-slate-500">Total de Convidados</span>
+        <p id="stat-total" class="text-2xl font-bold font-mono tabular-nums text-slate-900 mt-1">0</p>
+      </div>
+      <div class="bg-white border border-slate-200 rounded-xl p-4">
+        <span class="text-xs font-medium text-slate-500">Confirmados (RSVP)</span>
+        <p id="stat-confirmed" class="text-2xl font-bold font-mono tabular-nums text-emerald-700 mt-1">0</p>
+      </div>
+      <div class="bg-white border border-slate-200 rounded-xl p-4">
+        <span class="text-xs font-medium text-slate-500">Pendentes</span>
+        <p id="stat-pending" class="text-2xl font-bold font-mono tabular-nums text-amber-700 mt-1">0</p>
+      </div>
+      <div class="bg-white border border-slate-200 rounded-xl p-4">
+        <span class="text-xs font-medium text-slate-500">Recusados</span>
+        <p id="stat-declined" class="text-2xl font-bold font-mono tabular-nums text-slate-600 mt-1">0</p>
+      </div>
+      <div class="bg-white border border-slate-200 rounded-xl p-4 col-span-2 lg:col-span-1">
+        <span class="text-xs font-medium text-slate-500">Check-in na Portaria</span>
+        <p id="stat-checkedin" class="text-2xl font-bold font-mono tabular-nums text-slate-900 mt-1">0</p>
+      </div>
+    </section>
+
+    <!-- Main 2-Column Workspace: Left = Template & Interactive QR Editor | Right = Batch Import & Guest Table -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+
+      <!-- Left Column: Visual Template Editor (5 cols) -->
+      <section class="lg:col-span-5 bg-white border border-slate-200 rounded-xl p-6 space-y-5">
+        <div class="border-b border-slate-200 pb-4">
+          <h2 class="text-lg font-semibold text-slate-900">1. Modelo do Convite &amp; Posição do QR Code</h2>
+          <p class="text-xs text-slate-500 mt-1">
+            Envie a arte de fundo oficial (PNG/JPG) e posicione interativamente o quadrado para onde o QR Code do convidado será estampado pelo servidor.
+          </p>
+        </div>
+
+        <form id="template-form" class="space-y-5">
+          <div>
+            <label for="template-file-input" class="block text-xs font-semibold text-slate-700 mb-1.5">
+              Substituir Imagem de Fundo (PNG ou JPG)
+            </label>
+            <input
+              id="template-file-input"
+              name="template"
+              type="file"
+              accept="image/png,image/jpeg,image/webp"
+              class="block w-full text-xs text-slate-600 file:mr-3 file:py-2 file:px-3.5 file:rounded-md file:border file:border-slate-300 file:text-xs file:font-semibold file:bg-slate-50 file:text-slate-800 hover:file:bg-slate-100 cursor-pointer"
+            />
+          </div>
+
+          <!-- Interactive Visual Canvas Stage -->
+          <div class="space-y-2">
+            <div class="flex items-center justify-between text-xs text-slate-500">
+              <span>Arraste o quadrado ou puxe o canto para redimensionar:</span>
+              <span id="natural-dimensions-label" class="font-mono tabular-nums">800 × 1120 px</span>
+            </div>
+
+            <div
+              id="template-stage"
+              data-testid="template-stage"
+              class="relative w-full max-w-[400px] mx-auto overflow-hidden rounded-lg border border-slate-300 bg-slate-900 shadow-inner"
+            >
+              <img
+                id="template-preview-img"
+                src="/uploads/default-template.png"
+                alt="Imagem base do convite para posicionamento do QR Code"
+                referrerPolicy="no-referrer"
+                draggable="false"
+                class="w-full h-auto block select-none pointer-events-none"
+              />
+
+              <!-- Draggable and Resizable QR Code Box -->
+              <div
+                id="qr-overlay-box"
+                data-testid="qr-overlay-box"
+                role="slider"
+                aria-label="Posição e tamanho do QR Code"
+                tabindex="0"
+                style="left: 120px; top: 300px; width: 110px; height: 110px;"
+                class="absolute border-2 border-amber-400 bg-white/90 text-slate-900 shadow-md flex flex-col items-center justify-center cursor-move group"
+              >
+                <div class="pointer-events-none text-center px-1">
+                  <div class="text-[10px] font-bold tracking-wider text-slate-900">QR CODE</div>
+                  <div id="qr-box-live-Readout" class="text-[10px] font-mono tabular-nums text-slate-600">260px</div>
+                </div>
+
+                <!-- Bottom-Right Resize Handle -->
+                <div
+                  id="qr-resize-handle"
+                  title="Arraste para redimensionar"
+                  class="absolute -bottom-1.5 -right-1.5 w-4 h-4 bg-amber-500 border-2 border-slate-900 rounded-sm cursor-nwse-resize"
+                ></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Real Coordinates Readout -->
+          <div class="grid grid-cols-3 gap-3 bg-slate-50 border border-slate-200 rounded-lg p-3">
+            <div>
+              <label for="input-qr-x" class="block text-[11px] font-medium text-slate-500">Coordenada X (px)</label>
+              <input
+                id="input-qr-x"
+                type="number"
+                min="0"
+                class="w-full mt-1 px-2.5 py-1.5 text-xs font-mono tabular-nums bg-white border border-slate-300 rounded text-slate-900"
+              />
+            </div>
+            <div>
+              <label for="input-qr-y" class="block text-[11px] font-medium text-slate-500">Coordenada Y (px)</label>
+              <input
+                id="input-qr-y"
+                type="number"
+                min="0"
+                class="w-full mt-1 px-2.5 py-1.5 text-xs font-mono tabular-nums bg-white border border-slate-300 rounded text-slate-900"
+              />
+            </div>
+            <div>
+              <label for="input-qr-size" class="block text-[11px] font-medium text-slate-500">Tamanho QR (px)</label>
+              <input
+                id="input-qr-size"
+                type="number"
+                min="40"
+                class="w-full mt-1 px-2.5 py-1.5 text-xs font-mono tabular-nums bg-white border border-slate-300 rounded text-slate-900"
+              />
+            </div>
+          </div>
+
+          <button
+            id="btn-save-template"
+            type="submit"
+            class="w-full px-5 py-3 text-sm font-semibold text-white bg-slate-900 hover:bg-slate-800 rounded-lg transition-colors whitespace-nowrap shrink-0 cursor-pointer"
+          >
+            Salvar Posição do QR Code
+          </button>
+        </form>
+      </section>
+
+      <!-- Right Column: Batch Guest Import & Guest Directory Table (7 cols) -->
+      <section class="lg:col-span-7 space-y-6">
+
+        <!-- Batch Guest Import Card -->
+        <div class="bg-white border border-slate-200 rounded-xl p-6 space-y-4">
+          <div class="border-b border-slate-200 pb-3">
+            <h2 class="text-lg font-semibold text-slate-900">2. Importar Convidados em Lote</h2>
+            <p class="text-xs text-slate-500 mt-0.5">
+              Cole sua lista real de convidados (uma pessoa por linha) no formato <code class="font-mono text-slate-700">Nome Completo, Telefone com DDD</code>.
+            </p>
+          </div>
+
+          <form id="batch-import-form" class="space-y-4">
+            <div>
+              <label for="batch-textarea" class="sr-only">Lista de convidados</label>
+              <textarea
+                id="batch-textarea"
+                rows="4"
+                placeholder="Exemplo de preenchimento:&#10;Dra. Carolina Mendes, (11) 99876-5432&#10;Eng. Marcos Vinicius Pereira, 21 98765-4321&#10;Juliana Costa e Silva, 31 99122-3344"
+                class="w-full px-3.5 py-3 text-sm font-mono bg-slate-50 border border-slate-300 rounded-lg text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-600 focus:bg-white"
+              ></textarea>
+            </div>
+
+            <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+              <span class="text-xs text-slate-500">
+                A rota sanitiza automaticamente parênteses, traços e espaços, gerando tokens UUID únicos.
+              </span>
+              <button
+                id="btn-import-guests"
+                type="submit"
+                class="px-5 py-2.5 text-sm font-semibold text-white bg-amber-600 hover:bg-amber-700 rounded-lg transition-colors whitespace-nowrap shrink-0 cursor-pointer"
+              >
+                Cadastrar Convidados
+              </button>
+            </div>
+          </form>
+
+          <!-- Import Errors / Details -->
+          <div id="batch-errors-box" class="hidden rounded-lg border border-amber-200 bg-amber-50 p-3.5 text-xs text-amber-900 space-y-1"></div>
+        </div>
+
+        <!-- Guests Management Table Card -->
+        <div class="bg-white border border-slate-200 rounded-xl p-6 space-y-4">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200 pb-4">
+            <div>
+              <h2 class="text-lg font-semibold text-slate-900">3. Diretório de Convidados do Evento</h2>
+              <p class="text-xs text-slate-500 mt-0.5">
+                Consulte status de RSVP, tokens emitidos e registros de portaria.
+              </p>
+            </div>
+
+            <!-- Search Filter Input -->
+            <div class="w-full sm:w-64">
+              <label for="guest-filter-input" class="sr-only">Filtrar por nome ou telefone</label>
+              <input
+                id="guest-filter-input"
+                type="search"
+                placeholder="Filtrar por nome ou telefone..."
+                class="w-full px-3 py-1.5 text-xs bg-slate-50 border border-slate-300 rounded-lg text-slate-900 focus:outline-none focus:ring-2 focus:ring-amber-600"
+              />
+            </div>
+          </div>
+
+          <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse">
+              <thead>
+                <tr class="border-b border-slate-200 text-[11px] font-semibold text-slate-500">
+                  <th class="py-2.5 pr-2">Convidado</th>
+                  <th class="py-2.5 px-2">Telefone</th>
+                  <th class="py-2.5 px-2">Status RSVP</th>
+                  <th class="py-2.5 px-2">Portaria / Check-in</th>
+                  <th class="py-2.5 pl-2 text-right">Ações</th>
+                </tr>
+              </thead>
+              <tbody id="guests-table-body" class="divide-y divide-slate-200 text-xs">
+                <!-- Populated dynamically -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </section>
+    </div>
+  </main>
+
+  <footer class="w-full border-t border-slate-200 bg-white mt-auto">
+    <div class="max-w-7xl mx-auto px-6 py-4 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-500">
+      <span>ConviteQR · Gestão de Eventos em Produção</span>
+      <span>Acesso Restrito ao Administrador</span>
+    </div>
+  </footer>
+
+  <script>
+    const adminLoginScreen = document.getElementById('admin-login-screen');
+    const adminMainContent = document.getElementById('admin-main-content');
+    const adminAuthForm = document.getElementById('admin-auth-form');
+    const adminPasskeyInput = document.getElementById('admin-passkey-input');
+    const adminLoginError = document.getElementById('admin-login-error');
+    const btnLoginAdmin = document.getElementById('btn-login-admin');
+    const adminAuthBadge = document.getElementById('admin-auth-badge');
+    const btnLogoutAdmin = document.getElementById('btn-logout-admin');
+
+    const adminAlert = document.getElementById('admin-alert');
+    const inputPortariaKey = document.getElementById('input-portaria-key');
+    const inputAdminKey = document.getElementById('input-admin-key');
+    const btnCopyPortariaKey = document.getElementById('btn-copy-portaria-key');
+    const btnSaveKeys = document.getElementById('btn-save-keys');
+
+    const statTotal = document.getElementById('stat-total');
+    const statConfirmed = document.getElementById('stat-confirmed');
+    const statPending = document.getElementById('stat-pending');
+    const statDeclined = document.getElementById('stat-declined');
+    const statCheckedin = document.getElementById('stat-checkedin');
+
+    const templateForm = document.getElementById('template-form');
+    const templateFileInput = document.getElementById('template-file-input');
+    const templateStage = document.getElementById('template-stage');
+    const templatePreviewImg = document.getElementById('template-preview-img');
+    const qrOverlayBox = document.getElementById('qr-overlay-box');
+    const qrResizeHandle = document.getElementById('qr-resize-handle');
+    const qrBoxLiveReadout = document.getElementById('qr-box-live-Readout');
+    const naturalDimensionsLabel = document.getElementById('natural-dimensions-label');
+
+    const inputQrX = document.getElementById('input-qr-x');
+    const inputQrY = document.getElementById('input-qr-y');
+    const inputQrSize = document.getElementById('input-qr-size');
+    const btnSaveTemplate = document.getElementById('btn-save-template');
+
+    const batchImportForm = document.getElementById('batch-import-form');
+    const batchTextarea = document.getElementById('batch-textarea');
+    const btnImportGuests = document.getElementById('btn-import-guests');
+    const batchErrorsBox = document.getElementById('batch-errors-box');
+
+    const guestFilterInput = document.getElementById('guest-filter-input');
+    const guestsTableBody = document.getElementById('guests-table-body');
+
+    let allGuests = [];
+    let currentAdminKey = sessionStorage.getItem('conviteqr_admin_key') || localStorage.getItem('conviteqr_admin_key') || '';
+    let currentConfig = {
+      template_path: '/uploads/default-template.png',
+      qr_x: 270,
+      qr_y: 670,
+      qr_size: 260,
+      naturalWidth: 800,
+      naturalHeight: 1120
+    };
+
+    let boxState = {
+      x: 120,
+      y: 300,
+      size: 110
+    };
+
+    function getAdminHeaders(extra = {}) {
+      return {
+        'Authorization': `Bearer ${currentAdminKey}`,
+        'x-admin-key': currentAdminKey,
+        ...extra
+      };
+    }
+
+    function showBanner(message, type = 'success') {
+      adminAlert.classList.remove('hidden', 'border-emerald-200', 'bg-emerald-50', 'text-emerald-900', 'border-red-200', 'bg-red-50', 'text-red-800');
+      if (type === 'error') {
+        adminAlert.classList.add('border-red-200', 'bg-red-50', 'text-red-800');
+      } else {
+        adminAlert.classList.add('border-emerald-200', 'bg-emerald-50', 'text-emerald-900');
+      }
+      adminAlert.textContent = message;
+    }
+
+    function formatPhone(digits) {
+      const clean = String(digits || '').replace(/\D/g, '');
+      if (clean.length === 11) {
+        return `(${clean.slice(0, 2)}) ${clean.slice(2, 7)}-${clean.slice(7)}`;
+      }
+      if (clean.length === 10) {
+        return `(${clean.slice(0, 2)}) ${clean.slice(2, 6)}-${clean.slice(6)}`;
+      }
+      return clean;
+    }
+
+    function syncStageBoxFromRealCoords() {
+      const renderedWidth = templatePreviewImg.clientWidth || 360;
+      const renderedHeight = templatePreviewImg.clientHeight || 504;
+      const natW = templatePreviewImg.naturalWidth || currentConfig.naturalWidth || 800;
+      const natH = templatePreviewImg.naturalHeight || currentConfig.naturalHeight || 1120;
+
+      naturalDimensionsLabel.textContent = `${natW} × ${natH} px`;
+
+      const scaleX = renderedWidth / natW;
+      const scaleY = renderedHeight / natH;
+
+      boxState.size = Math.max(28, Math.round(currentConfig.qr_size * scaleX));
+      boxState.x = Math.max(0, Math.min(Math.round(currentConfig.qr_x * scaleX), renderedWidth - boxState.size));
+      boxState.y = Math.max(0, Math.min(Math.round(currentConfig.qr_y * scaleY), renderedHeight - boxState.size));
+
+      applyBoxToDom();
+      updateRealInputsFromBox();
+    }
+
+    function applyBoxToDom() {
+      qrOverlayBox.style.left = `${boxState.x}px`;
+      qrOverlayBox.style.top = `${boxState.y}px`;
+      qrOverlayBox.style.width = `${boxState.size}px`;
+      qrOverlayBox.style.height = `${boxState.size}px`;
+    }
+
+    function updateRealInputsFromBox() {
+      const renderedWidth = templatePreviewImg.clientWidth || 1;
+      const renderedHeight = templatePreviewImg.clientHeight || 1;
+      const natW = templatePreviewImg.naturalWidth || currentConfig.naturalWidth || 800;
+      const natH = templatePreviewImg.naturalHeight || currentConfig.naturalHeight || 1120;
+
+      const scaleX = natW / renderedWidth;
+      const scaleY = natH / renderedHeight;
+      const scaleAvg = (scaleX + scaleY) / 2;
+
+      const realSize = Math.max(40, Math.min(Math.round(boxState.size * scaleAvg), Math.min(natW, natH)));
+      const realX = Math.max(0, Math.min(Math.round(boxState.x * scaleX), natW - realSize));
+      const realY = Math.max(0, Math.min(Math.round(boxState.y * scaleY), natH - realSize));
+
+      currentConfig.qr_x = realX;
+      currentConfig.qr_y = realY;
+      currentConfig.qr_size = realSize;
+
+      inputQrX.value = realX;
+      inputQrY.value = realY;
+      inputQrSize.value = realSize;
+      qrBoxLiveReadout.textContent = `${realSize}px`;
+    }
+
+    function onManualCoordInput() {
+      const natW = templatePreviewImg.naturalWidth || currentConfig.naturalWidth || 800;
+      const natH = templatePreviewImg.naturalHeight || currentConfig.naturalHeight || 1120;
+      currentConfig.qr_size = Math.max(40, Math.min(Number(inputQrSize.value) || 200, Math.min(natW, natH)));
+      currentConfig.qr_x = Math.max(0, Math.min(Number(inputQrX.value) || 0, natW - currentConfig.qr_size));
+      currentConfig.qr_y = Math.max(0, Math.min(Number(inputQrY.value) || 0, natH - currentConfig.qr_size));
+      syncStageBoxFromRealCoords();
+    }
+
+    inputQrX.addEventListener('change', onManualCoordInput);
+    inputQrY.addEventListener('change', onManualCoordInput);
+    inputQrSize.addEventListener('change', onManualCoordInput);
+
+    let interactionMode = null;
+    let startPointer = { x: 0, y: 0 };
+    let startBox = { x: 0, y: 0, size: 0 };
+
+    qrOverlayBox.addEventListener('pointerdown', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      const isResize = e.target === qrResizeHandle;
+      interactionMode = isResize ? 'resize' : 'drag';
+      startPointer = { x: e.clientX, y: e.clientY };
+      startBox = { ...boxState };
+      qrOverlayBox.setPointerCapture(e.pointerId);
+    });
+
+    qrOverlayBox.addEventListener('pointermove', (e) => {
+      if (!interactionMode) return;
+      e.preventDefault();
+
+      const stageW = templatePreviewImg.clientWidth || 360;
+      const stageH = templatePreviewImg.clientHeight || 504;
+      const dx = e.clientX - startPointer.x;
+      const dy = e.clientY - startPointer.y;
+
+      if (interactionMode === 'drag') {
+        boxState.x = Math.max(0, Math.min(startBox.x + dx, stageW - boxState.size));
+        boxState.y = Math.max(0, Math.min(startBox.y + dy, stageH - boxState.size));
+      } else if (interactionMode === 'resize') {
+        const delta = Math.max(dx, dy);
+        const maxPossibleSize = Math.min(stageW - startBox.x, stageH - startBox.y);
+        boxState.size = Math.max(30, Math.min(startBox.size + delta, maxPossibleSize));
+      }
+
+      applyBoxToDom();
+      updateRealInputsFromBox();
+    });
+
+    qrOverlayBox.addEventListener('pointerup', (e) => {
+      if (!interactionMode) return;
+      interactionMode = null;
+      try {
+        qrOverlayBox.releasePointerCapture(e.pointerId);
+      } catch {}
+    });
+
+    templateFileInput.addEventListener('change', () => {
+      const file = templateFileInput.files && templateFileInput.files[0];
+      if (!file) return;
+      const objectUrl = URL.createObjectURL(file);
+      templatePreviewImg.onload = () => {
+        currentConfig.naturalWidth = templatePreviewImg.naturalWidth;
+        currentConfig.naturalHeight = templatePreviewImg.naturalHeight;
+        syncStageBoxFromRealCoords();
+      };
+      templatePreviewImg.src = objectUrl;
+    });
+
+    templatePreviewImg.addEventListener('load', () => {
+      currentConfig.naturalWidth = templatePreviewImg.naturalWidth || 800;
+      currentConfig.naturalHeight = templatePreviewImg.naturalHeight || 1120;
+      syncStageBoxFromRealCoords();
+    });
+
+    window.addEventListener('resize', syncStageBoxFromRealCoords);
+
+    // Save Template & Coordinates
+    templateForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      btnSaveTemplate.disabled = true;
+      btnSaveTemplate.textContent = 'Salvando...';
+
+      try {
+        const formData = new FormData();
+        if (templateFileInput.files && templateFileInput.files[0]) {
+          formData.append('template', templateFileInput.files[0]);
+        }
+
+        const renderedWidth = templatePreviewImg.clientWidth || 360;
+        const renderedHeight = templatePreviewImg.clientHeight || 504;
+        const natW = templatePreviewImg.naturalWidth || currentConfig.naturalWidth || 800;
+        const natH = templatePreviewImg.naturalHeight || currentConfig.naturalHeight || 1120;
+
+        formData.append('displayX', String(boxState.x));
+        formData.append('displayY', String(boxState.y));
+        formData.append('displaySize', String(boxState.size));
+        formData.append('renderedWidth', String(renderedWidth));
+        formData.append('renderedHeight', String(renderedHeight));
+        formData.append('naturalWidth', String(natW));
+        formData.append('naturalHeight', String(natH));
+        formData.append('qr_x', String(currentConfig.qr_x));
+        formData.append('qr_y', String(currentConfig.qr_y));
+        formData.append('qr_size', String(currentConfig.qr_size));
+
+        const res = await fetch('/api/admin/template', {
+          method: 'POST',
+          headers: getAdminHeaders(),
+          body: formData
+        });
+
+        const data = await res.json();
+        if (!res.ok) {
+          showBanner(data.error || 'Erro ao salvar configuração do template.', 'error');
+          return;
+        }
+
+        currentConfig = data.config;
+        templatePreviewImg.src = `${currentConfig.template_path}?t=${Date.now()}`;
+        templateFileInput.value = '';
+        showBanner(`Posição salva! Coordenadas reais: X=${currentConfig.qr_x}, Y=${currentConfig.qr_y}, Tamanho=${currentConfig.qr_size}px.`);
+      } catch (err) {
+        showBanner('Falha de conexão ao salvar template.', 'error');
+      } finally {
+        btnSaveTemplate.disabled = false;
+        btnSaveTemplate.textContent = 'Salvar Posição do QR Code';
+      }
+    });
+
+    // Save Keys
+    btnSaveKeys.addEventListener('click', async () => {
+      const pKey = inputPortariaKey.value.trim();
+      const aKey = inputAdminKey.value.trim();
+
+      if (!pKey || !aKey) {
+        showBanner('As chaves de acesso devem conter pelo menos 4 caracteres.', 'error');
+        return;
+      }
+
+      btnSaveKeys.disabled = true;
+      btnSaveKeys.textContent = 'Gravando...';
+
+      try {
+        const res = await fetch('/api/admin/keys', {
+          method: 'POST',
+          headers: getAdminHeaders({ 'Content-Type': 'application/json' }),
+          body: JSON.stringify({ portariaPasskey: pKey, adminPasskey: aKey })
+        });
+        const data = await res.json();
+        if (res.ok) {
+          showBanner('Chaves de acesso da Portaria e do Administrador atualizadas com sucesso!');
+          if (aKey !== currentAdminKey) {
+            currentAdminKey = aKey;
+            sessionStorage.setItem('conviteqr_admin_key', aKey);
+            localStorage.setItem('conviteqr_admin_key', aKey);
+          }
+        } else {
+          showBanner(data.error || 'Erro ao atualizar chaves.', 'error');
+        }
+      } catch {
+        showBanner('Erro de comunicação ao atualizar chaves.', 'error');
+      } finally {
+        btnSaveKeys.disabled = false;
+        btnSaveKeys.textContent = 'Salvar Novas Chaves';
+      }
+    });
+
+    btnCopyPortariaKey.addEventListener('click', async () => {
+      const pKey = inputPortariaKey.value.trim();
+      if (!pKey) return;
+      try {
+        await navigator.clipboard.writeText(pKey);
+        btnCopyPortariaKey.textContent = 'Copiada!';
+        setTimeout(() => {
+          btnCopyPortariaKey.textContent = 'Copiar Chave';
+        }, 1800);
+      } catch {}
+    });
+
+    // Submit Batch Import
+    batchImportForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      batchErrorsBox.classList.add('hidden');
+      const rawText = batchTextarea.value.trim();
+
+      if (!rawText) {
+        showBanner('Digite ao menos uma linha no formato "Nome, Telefone" para cadastrar convidados.', 'error');
+        return;
+      }
+
+      btnImportGuests.disabled = true;
+      btnImportGuests.textContent = 'Cadastrando...';
+
+      try {
+        const res = await fetch('/api/admin/guests/import', {
+          method: 'POST',
+          headers: getAdminHeaders({ 'Content-Type': 'application/json' }),
+          body: JSON.stringify({ rawText })
+        });
+        const data = await res.json();
+
+        if (!res.ok) {
+          showBanner(data.error || 'Erro ao cadastrar convidados.', 'error');
+          if (data.errors && data.errors.length > 0) {
+            batchErrorsBox.innerHTML = data.errors
+              .map((errItem) => `<div>Linha ${errItem.line}: ${errItem.reason}</div>`)
+              .join('');
+            batchErrorsBox.classList.remove('hidden');
+          }
+          return;
+        }
+
+        batchTextarea.value = '';
+        showBanner(data.message);
+        if (data.errors && data.errors.length > 0) {
+          batchErrorsBox.innerHTML = data.errors
+            .map((errItem) => `<div>Aviso na linha ${errItem.line}: ${errItem.reason}</div>`)
+            .join('');
+          batchErrorsBox.classList.remove('hidden');
+        }
+        await loadAdminData();
+      } catch (err) {
+        showBanner('Erro de rede ao enviar lote de convidados.', 'error');
+      } finally {
+        btnImportGuests.disabled = false;
+        btnImportGuests.textContent = 'Cadastrar Convidados';
+      }
+    });
+
+    function renderGuestsTable() {
+      const query = guestFilterInput.value.trim().toLowerCase();
+      const filtered = allGuests.filter((g) => {
+        if (!query) return true;
+        return (
+          g.name.toLowerCase().includes(query) ||
+          g.phone.includes(query) ||
+          g.token.toLowerCase().includes(query)
+        );
+      });
+
+      guestsTableBody.innerHTML = '';
+
+      if (filtered.length === 0) {
+        guestsTableBody.innerHTML = `
+          <tr>
+            <td colspan="5" class="py-12 text-center text-slate-500">
+              <div class="space-y-1">
+                <p class="font-medium text-slate-700">Nenhum convidado cadastrado até o momento.</p>
+                <p class="text-xs text-slate-400">Cole sua lista de nomes e telefones no campo acima para começar a emitir os convites.</p>
+              </div>
+            </td>
+          </tr>
+        `;
+        return;
+      }
+
+      filtered.forEach((g) => {
+        const tr = document.createElement('tr');
+        tr.className = 'hover:bg-slate-50 transition-colors';
+
+        const statusText =
+          g.status === 'confirmed'
+            ? '<span class="font-semibold text-emerald-700">Confirmado</span>'
+            : g.status === 'declined'
+            ? '<span class="text-slate-500">Recusado</span>'
+            : '<span class="font-medium text-amber-700">Pendente</span>';
+
+        const checkinText =
+          Number(g.checked_in) === 1
+            ? `<span class="font-semibold text-emerald-700 tabular-nums" title="Check-in em ${g.checked_in_at || ''}">Entrou (${(g.checked_in_at || '').slice(11, 16) || 'OK'})</span>`
+            : '<span class="text-slate-400">Aguardando</span>';
+
+        tr.innerHTML = `
+          <td class="py-2.5 pr-2">
+            <div class="font-semibold text-slate-900 truncate max-w-[165px]" title="${g.name}">${g.name}</div>
+            <div class="text-[11px] font-mono text-slate-500 tabular-nums truncate max-w-[165px]" title="${g.token}">
+              ${g.token.slice(0, 18)}…
+            </div>
+          </td>
+          <td class="py-2.5 px-2 font-mono tabular-nums text-slate-700 whitespace-nowrap">
+            ${formatPhone(g.phone)}
+          </td>
+          <td class="py-2.5 px-2 whitespace-nowrap">
+            ${statusText}
+          </td>
+          <td class="py-2.5 px-2 whitespace-nowrap">
+            ${checkinText}
+          </td>
+          <td class="py-2.5 pl-2 text-right whitespace-nowrap space-x-2">
+            <a
+              href="/api/guest/invite/${encodeURIComponent(g.token)}"
+              target="_blank"
+              class="text-xs font-semibold text-amber-700 hover:text-amber-800 underline"
+            >
+              Convite
+            </a>
+            <button
+              type="button"
+              data-copy-token="${g.token}"
+              class="text-xs font-medium text-slate-600 hover:text-slate-900 cursor-pointer"
+            >
+              Token
+            </button>
+            <button
+              type="button"
+              data-delete-id="${g.id}"
+              aria-label="Remover ${g.name}"
+              class="text-xs font-medium text-red-600 hover:text-red-800 cursor-pointer"
+            >
+              Excluir
+            </button>
+          </td>
+        `;
+        guestsTableBody.appendChild(tr);
+      });
+
+      guestsTableBody.querySelectorAll('[data-copy-token]').forEach((btn) => {
+        btn.addEventListener('click', async () => {
+          const token = btn.getAttribute('data-copy-token');
+          try {
+            await navigator.clipboard.writeText(token);
+            btn.textContent = 'Copiado!';
+            setTimeout(() => {
+              btn.textContent = 'Token';
+            }, 1400);
+          } catch {}
+        });
+      });
+
+      guestsTableBody.querySelectorAll('[data-delete-id]').forEach((btn) => {
+        btn.addEventListener('click', async () => {
+          const id = btn.getAttribute('data-delete-id');
+          try {
+            const res = await fetch(`/api/admin/guests/${id}`, {
+              method: 'DELETE',
+              headers: getAdminHeaders()
+            });
+            if (res.ok) {
+              await loadAdminData();
+            }
+          } catch {}
+        });
+      });
+    }
+
+    guestFilterInput.addEventListener('input', renderGuestsTable);
+
+    function showLoginScreen(errorMsg = '') {
+      adminLoginScreen.classList.remove('hidden');
+      adminMainContent.classList.add('hidden');
+      adminAuthBadge.classList.add('hidden');
+      if (errorMsg) {
+        adminLoginError.textContent = errorMsg;
+        adminLoginError.classList.remove('hidden');
+      } else {
+        adminLoginError.classList.add('hidden');
+      }
+    }
+
+    function showMainContent() {
+      adminLoginScreen.classList.add('hidden');
+      adminMainContent.classList.remove('hidden');
+      adminAuthBadge.classList.remove('hidden');
+      loadAdminData();
+    }
+
+    async function loadAdminData() {
+      if (!currentAdminKey) return;
+      try {
+        const [configRes, guestsRes, keysRes] = await Promise.all([
+          fetch('/api/admin/config', { headers: getAdminHeaders() }),
+          fetch('/api/admin/guests', { headers: getAdminHeaders() }),
+          fetch('/api/admin/keys', { headers: getAdminHeaders() })
+        ]);
+
+        if (configRes.status === 401 || guestsRes.status === 401 || keysRes.status === 401) {
+          showLoginScreen('Sessão expirada ou chave mestra não autorizada.');
+          return;
+        }
+
+        const configData = await configRes.json();
+        const guestsData = await guestsRes.json();
+        const keysData = await keysRes.json();
+
+        if (keysData.portariaPasskey) inputPortariaKey.value = keysData.portariaPasskey;
+        if (keysData.adminPasskey) inputAdminKey.value = keysData.adminPasskey;
+
+        if (configData.config) {
+          currentConfig = configData.config;
+          const wantedSrc = currentConfig.template_path;
+          if (!templatePreviewImg.getAttribute('src').startsWith(wantedSrc)) {
+            templatePreviewImg.src = wantedSrc;
+          } else {
+            syncStageBoxFromRealCoords();
+          }
+        }
+
+        if (guestsData.guests) {
+          allGuests = guestsData.guests;
+          statTotal.textContent = guestsData.stats.total;
+          statConfirmed.textContent = guestsData.stats.confirmed;
+          statPending.textContent = guestsData.stats.pending;
+          statDeclined.textContent = guestsData.stats.declined;
+          statCheckedin.textContent = guestsData.stats.checkedIn;
+          renderGuestsTable();
+        }
+      } catch (err) {
+        showBanner('Erro ao carregar dados do painel administrativo.', 'error');
+      }
+    }
+
+    adminAuthForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const enteredKey = adminPasskeyInput.value.trim();
+      if (!enteredKey) return;
+
+      btnLoginAdmin.disabled = true;
+      btnLoginAdmin.textContent = 'Autenticando...';
+      adminLoginError.classList.add('hidden');
+
+      try {
+        const res = await fetch('/api/admin/verify', {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${enteredKey}`, 'x-admin-key': enteredKey }
+        });
+        const data = await res.json();
+
+        if (res.ok && data.ok) {
+          currentAdminKey = enteredKey;
+          sessionStorage.setItem('conviteqr_admin_key', enteredKey);
+          localStorage.setItem('conviteqr_admin_key', enteredKey);
+          showMainContent();
+        } else {
+          showLoginScreen('Chave de administrador incorreta.');
+        }
+      } catch {
+        showLoginScreen('Falha de conexão com o servidor.');
+      } finally {
+        btnLoginAdmin.disabled = false;
+        btnLoginAdmin.textContent = 'Acessar Painel';
+      }
+    });
+
+    btnLogoutAdmin.addEventListener('click', () => {
+      currentAdminKey = '';
+      sessionStorage.removeItem('conviteqr_admin_key');
+      localStorage.removeItem('conviteqr_admin_key');
+      showLoginScreen('Você encerrou a sessão de administrador.');
+    });
+
+    if (currentAdminKey) {
+      fetch('/api/admin/verify', {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${currentAdminKey}`, 'x-admin-key': currentAdminKey }
+      })
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.ok) {
+          showMainContent();
+        } else {
+          showLoginScreen();
+        }
+      })
+      .catch(() => showLoginScreen());
+    } else {
+      showLoginScreen();
+    }
+  </script>
+</body>
+</html>
